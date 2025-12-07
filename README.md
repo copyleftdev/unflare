@@ -31,21 +31,50 @@ A high-performance Cloudflare intelligence toolkit written in Zig. Zero external
 
 ## Installation
 
+### Quick Install (Linux/macOS)
+
+```bash
+curl -sSL https://raw.githubusercontent.com/copyleftdev/unflare/main/install.sh | bash
+```
+
+### Homebrew (macOS/Linux)
+
+```bash
+brew tap copyleftdev/tap
+brew install unflare
+```
+
+### Arch Linux (AUR)
+
+```bash
+yay -S unflare
+# or
+paru -S unflare
+```
+
+### Nix
+
+```bash
+nix run github:copyleftdev/unflare
+# or add to flake inputs
+```
+
+### Scoop (Windows)
+
+```powershell
+scoop bucket add unflare https://github.com/copyleftdev/unflare
+scoop install unflare
+```
+
 ### Pre-built Binaries
 
 Download from [Releases](https://github.com/copyleftdev/unflare/releases):
 
-```bash
-# Linux
-curl -LO https://github.com/copyleftdev/unflare/releases/latest/download/unflare-linux-x86_64
-chmod +x unflare-linux-x86_64
-sudo mv unflare-linux-x86_64 /usr/local/bin/unflare
-
-# macOS
-curl -LO https://github.com/copyleftdev/unflare/releases/latest/download/unflare-macos-aarch64
-chmod +x unflare-macos-aarch64
-sudo mv unflare-macos-aarch64 /usr/local/bin/unflare
-```
+| Platform | Binary |
+|----------|--------|
+| Linux x86_64 | `unflare-linux-x86_64` |
+| macOS Intel | `unflare-macos-x86_64` |
+| macOS Apple Silicon | `unflare-macos-aarch64` |
 
 ### From Source
 

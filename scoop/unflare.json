@@ -1,0 +1,21 @@
+{
+    "version": "0.1.0",
+    "description": "High-performance Cloudflare intelligence toolkit",
+    "homepage": "https://github.com/copyleftdev/unflare",
+    "license": "MIT",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/copyleftdev/unflare/releases/download/v0.1.0/unflare-windows-x86_64.exe",
+            "hash": ""
+        }
+    },
+    "bin": "unflare-windows-x86_64.exe",
+    "checkver": "github",
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/copyleftdev/unflare/releases/download/v$version/unflare-windows-x86_64.exe"
+            }
+        }
+    }
+}
