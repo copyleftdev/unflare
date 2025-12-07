@@ -95,46 +95,37 @@ pub fn run(allocator: Allocator) !void {
 
 /// Print help message
 fn printHelp(writer: anytype) !void {
-    // ASCII banner with colors matching logo (orange/gray/cyan)
     const o = Color.orange;
     const g = Color.gray;
     const c = Color.cyan;
     const r = Color.reset;
+    const b = Color.bold;
 
+    // Clean ASCII banner
     try writer.writeAll("\n");
-    try writer.writeAll(o ++ "         ⚡\n" ++ r);
-    try writer.writeAll(g ++ "        ╱" ++ o ++ "█" ++ g ++ "╲\n" ++ r);
-    try writer.writeAll(g ++ "       ▕" ++ o ++ "███" ++ g ++ "▏   " ++ r);
-    try writer.writeAll(o ++ "██╗   ██╗███╗  ██╗███████╗██╗      █████╗ ██████╗ ███████╗\n" ++ r);
-    try writer.writeAll(g ++ "       ▕" ++ o ++ "█" ++ r ++ "█" ++ o ++ "█" ++ g ++ "▏   " ++ r);
-    try writer.writeAll(o ++ "██║   ██║████╗ ██║██╔════╝██║     ██╔══██╗██╔══██╗██╔════╝\n" ++ r);
-    try writer.writeAll(g ++ "        ╲" ++ o ++ "█" ++ g ++ "╱    " ++ r);
-    try writer.writeAll(o ++ "██║   ██║██╔██╗██║█████╗  ██║     ███████║██████╔╝█████╗\n" ++ r);
-    try writer.writeAll(g ++ "         " ++ c ++ "•" ++ g ++ "     " ++ r);
-    try writer.writeAll(o ++ "██║   ██║██║╚████║██╔══╝  ██║     ██╔══██║██╔══██╗██╔══╝\n" ++ r);
-    try writer.writeAll("               ");
-    try writer.writeAll(o ++ "╚██████╔╝██║ ╚███║██║     ███████╗██║  ██║██║  ██║███████╗\n" ++ r);
-    try writer.writeAll("               ");
-    try writer.writeAll(g ++ " ╚═════╝ ╚═╝  ╚══╝╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝\n" ++ r);
+    try writer.writeAll(g ++ "  ┌──────────────────────────────────────────────────────────────┐\n" ++ r);
+    try writer.writeAll(g ++ "  │" ++ r ++ "  " ++ o ++ "⚡ " ++ b ++ "un" ++ o ++ "flare" ++ r);
+    try writer.writeAll("                                                  " ++ g ++ "│\n" ++ r);
+    try writer.writeAll(g ++ "  │" ++ r ++ "     " ++ Color.dim ++ "Cloudflare Intelligence Toolkit" ++ r);
+    try writer.writeAll("                         " ++ c ++ "v0.1.0" ++ r ++ " " ++ g ++ "│\n" ++ r);
+    try writer.writeAll(g ++ "  └──────────────────────────────────────────────────────────────┘\n" ++ r);
     try writer.writeAll("\n");
-    try writer.print("  {s}Cloudflare Intelligence Toolkit{s}                              {s}v0.1.0{s}\n\n", .{
-        Color.dim, r, c, r,
-    });
-    try writer.print("  {s}USAGE:{s}\n", .{ Color.bold, r });
-    try writer.print("      unflare {s}<command>{s} [options] {s}<target>{s}\n\n", .{ o, r, c, r });
-    try writer.print("  {s}COMMANDS:{s}\n", .{ Color.bold, r });
+    try writer.print("  {s}USAGE:{s}\n", .{ b, r });
+    try writer.print("      unflare {s}<command>{s} {s}<target>{s}\n\n", .{ o, r, c, r });
+    try writer.print("  {s}COMMANDS:{s}\n", .{ b, r });
     try writer.print("      {s}detect{s}     Detect Cloudflare on targets\n", .{ o, r });
-    try writer.print("      {s}probe{s}      Detailed response analysis\n", .{ o, r });
-    try writer.print("      {s}trace{s}      Fetch /cdn-cgi/trace data\n", .{ o, r });
+    try writer.print("      {s}probe{s}      Detailed HTTP response analysis\n", .{ o, r });
+    try writer.print("      {s}trace{s}      Fetch /cdn-cgi/trace endpoint\n", .{ o, r });
     try writer.print("      {s}origin{s}     Discover origin IP behind Cloudflare\n", .{ o, r });
-    try writer.print("      {s}favicon{s}    Generate favicon hash for hunting\n", .{ o, r });
+    try writer.print("      {s}favicon{s}    Generate favicon hash for Shodan\n", .{ o, r });
     try writer.print("      {s}ipcheck{s}    Check IPs against CDN/WAF ranges\n", .{ o, r });
     try writer.print("      {s}help{s}       Show this help message\n", .{ g, r });
-    try writer.print("      {s}version{s}    Show version information\n\n", .{ g, r });
-    try writer.print("  {s}EXAMPLES:{s}\n", .{ Color.bold, r });
-    try writer.print("      {s}${s} unflare detect example.com\n", .{ Color.dim, r });
-    try writer.print("      {s}${s} unflare origin example.com\n", .{ Color.dim, r });
-    try writer.print("      {s}${s} unflare ipcheck 104.16.1.1 8.8.8.8\n\n", .{ Color.dim, r });
+    try writer.print("      {s}version{s}    Show version\n\n", .{ g, r });
+    try writer.print("  {s}EXAMPLES:{s}\n", .{ b, r });
+    try writer.print("      {s}${s} unflare detect cloudflare.com\n", .{ g, r });
+    try writer.print("      {s}${s} unflare origin example.com\n", .{ g, r });
+    try writer.print("      {s}${s} unflare favicon github.com\n", .{ g, r });
+    try writer.print("      {s}${s} unflare ipcheck 104.16.1.1 8.8.8.8\n\n", .{ g, r });
 }
 
 /// Print version
