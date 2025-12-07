@@ -18,6 +18,9 @@ const tunnel = @import("../core/tunnel.zig");
 const r2 = @import("../core/r2.zig");
 const waf = @import("../core/waf.zig");
 
+// MCP server
+const mcp = @import("../mcp/mcp.zig");
+
 const Allocator = std.mem.Allocator;
 
 /// ANSI color codes
@@ -94,6 +97,14 @@ pub fn run(allocator: Allocator) !void {
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
 
+    // Check for --mcp flag first (MCP server mode)
+    for (args) |arg| {
+        if (std.mem.eql(u8, arg, "--mcp")) {
+            try mcp.runServer(allocator);
+            return;
+        }
+    }
+
     const stdout = std.io.getStdOut().writer();
 
     const command = parseCommand(args) orelse {
@@ -135,7 +146,7 @@ fn printHelp(writer: anytype) !void {
     try writer.writeAll(g ++ "  │" ++ r ++ "  " ++ o ++ "⚡ " ++ b ++ "un" ++ o ++ "flare" ++ r);
     try writer.writeAll("                                                  " ++ g ++ "│\n" ++ r);
     try writer.writeAll(g ++ "  │" ++ r ++ "     " ++ Color.dim ++ "Cloudflare Intelligence Toolkit" ++ r);
-    try writer.writeAll("                         " ++ c ++ "v0.2.0" ++ r ++ " " ++ g ++ "│\n" ++ r);
+    try writer.writeAll("                         " ++ c ++ "v0.3.0" ++ r ++ " " ++ g ++ "│\n" ++ r);
     try writer.writeAll(g ++ "  └──────────────────────────────────────────────────────────────┘\n" ++ r);
     try writer.writeAll("\n");
     try writer.print("  {s}USAGE:{s}\n", .{ b, r });
@@ -159,11 +170,13 @@ fn printHelp(writer: anytype) !void {
     try writer.print("      {s}${s} unflare origin example.com\n", .{ g, r });
     try writer.print("      {s}${s} unflare favicon github.com\n", .{ g, r });
     try writer.print("      {s}${s} unflare ipcheck 104.16.1.1 8.8.8.8\n\n", .{ g, r });
+    try writer.print("  {s}OPTIONS:{s}\n", .{ b, r });
+    try writer.print("      {s}--mcp{s}      Run as MCP server (Model Context Protocol)\n\n", .{ c, r });
 }
 
 /// Print version
 fn printVersion(writer: anytype) !void {
-    try writer.print("unflare {s}\n", .{"0.2.0"});
+    try writer.print("unflare {s}\n", .{"0.3.0"});
 }
 
 /// Run detect command

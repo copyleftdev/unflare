@@ -32,7 +32,7 @@ pub const CfRay = types.CfRay;
 pub const OriginCandidate = origin.OriginCandidate;
 
 /// Library version
-pub const version = "0.2.0";
+pub const version = "0.3.0";
 
 test {
     // Run all module tests

@@ -57,7 +57,7 @@ pub const Response = struct {
 pub const Config = struct {
     timeout_ns: u64 = 10 * std.time.ns_per_s,
     max_redirects: u8 = 10,
-    user_agent: []const u8 = "unflare/0.2.0",
+    user_agent: []const u8 = "unflare/0.3.0",
 };
 
 /// HTTP Client Error
