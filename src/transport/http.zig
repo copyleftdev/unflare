@@ -57,7 +57,7 @@ pub const Response = struct {
 pub const Config = struct {
     timeout_ns: u64 = 10 * std.time.ns_per_s,
     max_redirects: u8 = 10,
-    user_agent: []const u8 = "unflare/0.1.0",
+    user_agent: []const u8 = "unflare/0.2.0",
 };
 
 /// HTTP Client Error
@@ -70,8 +70,8 @@ pub const HttpError = error{
     OutOfMemory,
 };
 
-/// HTTP Client
-pub const Client = struct {
+/// HTTP Client (aliased as HttpClient for compatibility)
+pub const HttpClient = struct {
     allocator: Allocator,
     config: Config,
 
@@ -181,6 +181,76 @@ pub const Client = struct {
         return response;
     }
 
+    /// Perform a HEAD request (headers only, no body)
+    pub fn head(self: *Self, url_str: []const u8) HttpError!Response {
+        const start_time = std.time.nanoTimestamp();
+
+        var response = Response.init(self.allocator);
+        errdefer response.deinit();
+
+        // Parse URL
+        const uri = std.Uri.parse(url_str) catch {
+            return error.InvalidUrl;
+        };
+
+        // Create HTTP client
+        var client = std.http.Client{ .allocator = self.allocator };
+        defer client.deinit();
+
+        // Build request
+        var header_buf: [8192]u8 = undefined;
+        var req = client.open(.HEAD, uri, .{
+            .server_header_buffer = &header_buf,
+            .redirect_behavior = .unhandled,
+            .extra_headers = &.{
+                .{ .name = "User-Agent", .value = self.config.user_agent },
+                .{ .name = "Accept", .value = "*/*" },
+            },
+        }) catch {
+            return error.ConnectionFailed;
+        };
+        defer req.deinit();
+
+        // Send request
+        req.send() catch {
+            return error.RequestFailed;
+        };
+
+        // Wait for response
+        req.wait() catch {
+            return error.RequestFailed;
+        };
+
+        // Store status code
+        response.status_code = @intFromEnum(req.response.status);
+
+        // Parse and store response headers
+        var it = req.response.iterateHeaders();
+        while (it.next()) |header| {
+            const name_copy = self.allocator.dupe(u8, header.name) catch {
+                return error.OutOfMemory;
+            };
+            const value_copy = self.allocator.dupe(u8, header.value) catch {
+                self.allocator.free(name_copy);
+                return error.OutOfMemory;
+            };
+
+            response.headers.append(.{
+                .name = name_copy,
+                .value = value_copy,
+            }) catch {
+                self.allocator.free(name_copy);
+                self.allocator.free(value_copy);
+                return error.OutOfMemory;
+            };
+        }
+
+        // No body for HEAD requests
+        response.total_time_ns = @intCast(std.time.nanoTimestamp() - start_time);
+
+        return response;
+    }
+
     /// Fetch just the /cdn-cgi/trace endpoint
     pub fn fetchTrace(self: *Self, host: []const u8) HttpError!Response {
         var url_buf: [512]u8 = undefined;
@@ -190,6 +260,9 @@ pub const Client = struct {
         return self.get(url);
     }
 };
+
+/// Backward compatibility alias
+pub const Client = HttpClient;
 
 /// Parse URL into components
 pub const Url = struct {

@@ -11,6 +11,13 @@ const datacenters = @import("../data/datacenters.zig");
 const ip_ranges = @import("../data/ip_ranges.zig");
 const http = @import("../transport/http.zig");
 
+// v0.2.0 modules
+const workers = @import("../core/workers.zig");
+const pages = @import("../core/pages.zig");
+const tunnel = @import("../core/tunnel.zig");
+const r2 = @import("../core/r2.zig");
+const waf = @import("../core/waf.zig");
+
 const Allocator = std.mem.Allocator;
 
 /// ANSI color codes
@@ -47,6 +54,13 @@ pub const Command = enum {
     origin,
     favicon,
     ipcheck,
+    // v0.2.0 commands
+    workers_cmd,
+    pages_cmd,
+    tunnel_cmd,
+    r2_cmd,
+    waf_cmd,
+    // meta commands
     help,
     version,
 };
@@ -62,6 +76,13 @@ pub fn parseCommand(args: []const []const u8) ?Command {
     if (std.mem.eql(u8, cmd, "origin")) return .origin;
     if (std.mem.eql(u8, cmd, "favicon")) return .favicon;
     if (std.mem.eql(u8, cmd, "ipcheck")) return .ipcheck;
+    // v0.2.0 commands
+    if (std.mem.eql(u8, cmd, "workers")) return .workers_cmd;
+    if (std.mem.eql(u8, cmd, "pages")) return .pages_cmd;
+    if (std.mem.eql(u8, cmd, "tunnel")) return .tunnel_cmd;
+    if (std.mem.eql(u8, cmd, "r2")) return .r2_cmd;
+    if (std.mem.eql(u8, cmd, "waf")) return .waf_cmd;
+    // meta
     if (std.mem.eql(u8, cmd, "help") or std.mem.eql(u8, cmd, "--help") or std.mem.eql(u8, cmd, "-h")) return .help;
     if (std.mem.eql(u8, cmd, "version") or std.mem.eql(u8, cmd, "--version") or std.mem.eql(u8, cmd, "-V")) return .version;
 
@@ -88,6 +109,13 @@ pub fn run(allocator: Allocator) !void {
         .origin => try runOrigin(allocator, args, stdout),
         .favicon => try runFavicon(allocator, args, stdout),
         .ipcheck => try runIpCheck(args, stdout),
+        // v0.2.0 commands
+        .workers_cmd => try runWorkers(allocator, args, stdout),
+        .pages_cmd => try runPages(allocator, args, stdout),
+        .tunnel_cmd => try runTunnel(allocator, args, stdout),
+        .r2_cmd => try runR2(allocator, args, stdout),
+        .waf_cmd => try runWaf(allocator, args, stdout),
+        // meta
         .help => try printHelp(stdout),
         .version => try printVersion(stdout),
     }
@@ -107,7 +135,7 @@ fn printHelp(writer: anytype) !void {
     try writer.writeAll(g ++ "  │" ++ r ++ "  " ++ o ++ "⚡ " ++ b ++ "un" ++ o ++ "flare" ++ r);
     try writer.writeAll("                                                  " ++ g ++ "│\n" ++ r);
     try writer.writeAll(g ++ "  │" ++ r ++ "     " ++ Color.dim ++ "Cloudflare Intelligence Toolkit" ++ r);
-    try writer.writeAll("                         " ++ c ++ "v0.1.0" ++ r ++ " " ++ g ++ "│\n" ++ r);
+    try writer.writeAll("                         " ++ c ++ "v0.2.0" ++ r ++ " " ++ g ++ "│\n" ++ r);
     try writer.writeAll(g ++ "  └──────────────────────────────────────────────────────────────┘\n" ++ r);
     try writer.writeAll("\n");
     try writer.print("  {s}USAGE:{s}\n", .{ b, r });
@@ -119,6 +147,11 @@ fn printHelp(writer: anytype) !void {
     try writer.print("      {s}origin{s}     Discover origin IP behind Cloudflare\n", .{ o, r });
     try writer.print("      {s}favicon{s}    Generate favicon hash for Shodan\n", .{ o, r });
     try writer.print("      {s}ipcheck{s}    Check IPs against CDN/WAF ranges\n", .{ o, r });
+    try writer.print("      {s}workers{s}    Detect Cloudflare Workers\n", .{ o, r });
+    try writer.print("      {s}pages{s}      Detect Cloudflare Pages\n", .{ o, r });
+    try writer.print("      {s}tunnel{s}     Detect Cloudflare Tunnel\n", .{ o, r });
+    try writer.print("      {s}r2{s}         Detect Cloudflare R2 buckets\n", .{ o, r });
+    try writer.print("      {s}waf{s}        Detect Cloudflare WAF\n", .{ o, r });
     try writer.print("      {s}help{s}       Show this help message\n", .{ g, r });
     try writer.print("      {s}version{s}    Show version\n\n", .{ g, r });
     try writer.print("  {s}EXAMPLES:{s}\n", .{ b, r });
@@ -130,7 +163,7 @@ fn printHelp(writer: anytype) !void {
 
 /// Print version
 fn printVersion(writer: anytype) !void {
-    try writer.print("unflare {s}\n", .{"0.1.0"});
+    try writer.print("unflare {s}\n", .{"0.2.0"});
 }
 
 /// Run detect command
@@ -621,6 +654,190 @@ fn runIpCheck(args: []const []const u8, writer: anytype) !void {
     }
 
     try writer.writeAll("└───────────────┴────────────┴──────┴───────────┘\n");
+}
+
+// ============================================================================
+// v0.2.0 Commands
+// ============================================================================
+
+/// Run workers detection command
+fn runWorkers(allocator: Allocator, args: []const []const u8, writer: anytype) !void {
+    if (args.len < 3) {
+        try writer.print("{s}Error:{s} workers requires a target\n", .{ Color.red, Color.reset });
+        return error.MissingArgument;
+    }
+
+    const target = args[2];
+    try writer.print("\n{s}Workers Detection:{s} {s}\n\n", .{ Color.cyan, Color.reset, target });
+
+    const result = workers.detectWorker(allocator, target) catch |err| {
+        try writer.print("{s}Error:{s} {}\n", .{ Color.red, Color.reset, err });
+        return;
+    };
+
+    const platform_str = switch (result.platform) {
+        .workers_dev => "workers.dev",
+        .custom_domain => "Custom Domain",
+        .unknown => "Unknown",
+    };
+
+    try writer.print("  Is Worker:    {s}{s}{s}\n", .{
+        if (result.is_worker) Color.green else Color.dim,
+        if (result.is_worker) "Yes" else "No",
+        Color.reset,
+    });
+    try writer.print("  Confidence:   {d:.0}%\n", .{result.confidence * 100});
+    try writer.print("  Platform:     {s}\n", .{platform_str});
+
+    if (result.getAccountHint()) |hint| {
+        try writer.print("  Account:      {s}\n", .{hint});
+    }
+
+    try writer.writeAll("\n");
+}
+
+/// Run pages detection command
+fn runPages(allocator: Allocator, args: []const []const u8, writer: anytype) !void {
+    if (args.len < 3) {
+        try writer.print("{s}Error:{s} pages requires a target\n", .{ Color.red, Color.reset });
+        return error.MissingArgument;
+    }
+
+    const target = args[2];
+    try writer.print("\n{s}Pages Detection:{s} {s}\n\n", .{ Color.cyan, Color.reset, target });
+
+    const result = pages.detectPages(allocator, target) catch |err| {
+        try writer.print("{s}Error:{s} {}\n", .{ Color.red, Color.reset, err });
+        return;
+    };
+
+    try writer.print("  Is Pages:     {s}{s}{s}\n", .{
+        if (result.is_pages) Color.green else Color.dim,
+        if (result.is_pages) "Yes" else "No",
+        Color.reset,
+    });
+    try writer.print("  Confidence:   {d:.0}%\n", .{result.confidence * 100});
+
+    if (result.getProjectName()) |name| {
+        try writer.print("  Project:      {s}\n", .{name});
+    }
+
+    if (result.is_preview) {
+        try writer.print("  Preview:      {s}Yes{s}\n", .{ Color.yellow, Color.reset });
+    }
+
+    try writer.writeAll("\n");
+}
+
+/// Run tunnel detection command
+fn runTunnel(allocator: Allocator, args: []const []const u8, writer: anytype) !void {
+    if (args.len < 3) {
+        try writer.print("{s}Error:{s} tunnel requires a target\n", .{ Color.red, Color.reset });
+        return error.MissingArgument;
+    }
+
+    const target = args[2];
+    try writer.print("\n{s}Tunnel Detection:{s} {s}\n\n", .{ Color.cyan, Color.reset, target });
+
+    const result = tunnel.detectTunnel(allocator, target) catch |err| {
+        try writer.print("{s}Error:{s} {}\n", .{ Color.red, Color.reset, err });
+        return;
+    };
+
+    const type_str = switch (result.tunnel_type) {
+        .quick => "Quick Tunnel",
+        .named => "Named Tunnel",
+        .unknown => "Unknown",
+    };
+
+    try writer.print("  Is Tunnel:    {s}{s}{s}\n", .{
+        if (result.is_tunnel) Color.green else Color.dim,
+        if (result.is_tunnel) "Yes" else "No",
+        Color.reset,
+    });
+    try writer.print("  Confidence:   {d:.0}%\n", .{result.confidence * 100});
+    try writer.print("  Type:         {s}\n", .{type_str});
+
+    if (result.access_protected) {
+        try writer.print("  Access:       {s}Protected{s}\n", .{ Color.yellow, Color.reset });
+    }
+
+    if (result.error_code) |code| {
+        try writer.print("  Error Code:   {d} ({s})\n", .{ code, tunnel.getErrorDescription(code) });
+    }
+
+    try writer.writeAll("\n");
+}
+
+/// Run R2 detection command
+fn runR2(allocator: Allocator, args: []const []const u8, writer: anytype) !void {
+    if (args.len < 3) {
+        try writer.print("{s}Error:{s} r2 requires a target\n", .{ Color.red, Color.reset });
+        return error.MissingArgument;
+    }
+
+    const target = args[2];
+    try writer.print("\n{s}R2 Detection:{s} {s}\n\n", .{ Color.cyan, Color.reset, target });
+
+    const result = r2.detectR2(allocator, target) catch |err| {
+        try writer.print("{s}Error:{s} {}\n", .{ Color.red, Color.reset, err });
+        return;
+    };
+
+    try writer.print("  Is R2:        {s}{s}{s}\n", .{
+        if (result.is_r2) Color.green else Color.dim,
+        if (result.is_r2) "Yes" else "No",
+        Color.reset,
+    });
+    try writer.print("  Confidence:   {d:.0}%\n", .{result.confidence * 100});
+
+    if (result.getBucketName()) |name| {
+        try writer.print("  Bucket:       {s}\n", .{name});
+    }
+
+    if (result.getAccountId()) |id| {
+        try writer.print("  Account ID:   {s}\n", .{id});
+    }
+
+    if (result.public_access) {
+        try writer.print("  Public:       {s}Yes{s}\n", .{ Color.yellow, Color.reset });
+    }
+
+    try writer.writeAll("\n");
+}
+
+/// Run WAF detection command
+fn runWaf(allocator: Allocator, args: []const []const u8, writer: anytype) !void {
+    if (args.len < 3) {
+        try writer.print("{s}Error:{s} waf requires a target\n", .{ Color.red, Color.reset });
+        return error.MissingArgument;
+    }
+
+    const target = args[2];
+    try writer.print("\n{s}WAF Detection:{s} {s}\n\n", .{ Color.cyan, Color.reset, target });
+
+    const result = waf.detectWaf(allocator, target) catch |err| {
+        try writer.print("{s}Error:{s} {}\n", .{ Color.red, Color.reset, err });
+        return;
+    };
+
+    try writer.print("  WAF Active:   {s}{s}{s}\n", .{
+        if (result.waf_active) Color.green else Color.dim,
+        if (result.waf_active) "Yes" else "No",
+        Color.reset,
+    });
+    try writer.print("  Confidence:   {d:.0}%\n", .{result.confidence * 100});
+    try writer.print("  Sec Level:    {s}\n", .{waf.getSecurityLevelDescription(result.security_level)});
+
+    if (result.challenge_type) |ct| {
+        try writer.print("  Challenge:    {s}\n", .{waf.getChallengeDescription(ct)});
+    }
+
+    if (result.bot_management) {
+        try writer.print("  Bot Mgmt:     {s}Enabled{s}\n", .{ Color.yellow, Color.reset });
+    }
+
+    try writer.writeAll("\n");
 }
 
 // ============================================================================
