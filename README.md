@@ -14,7 +14,7 @@ A high-performance Cloudflare intelligence toolkit written in Zig. Zero external
 
 ---
 
-> **🪶 ~750KB binary.** In an era of 100MB+ Electron apps and bloated runtimes, we believe powerful tools should have a small footprint. unflare delivers full functionality in under 1MB — thanks to [Zig](https://ziglang.org/) and the incredible work of [@andrewrk](https://github.com/andrewrk).
+> **🪶 Small & safe.** In an era of 100MB+ Electron apps and bloated runtimes, we believe powerful tools should have a small footprint. Built with [Zig](https://ziglang.org/) and the incredible work of [@andrewrk](https://github.com/andrewrk).
 
 ---
 

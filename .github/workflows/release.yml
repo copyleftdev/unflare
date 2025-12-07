@@ -37,6 +37,9 @@ jobs:
       - name: Build
         run: zig build -Doptimize=ReleaseSafe
 
+      - name: Strip binary
+        run: strip zig-out/bin/unflare
+
       - name: Rename artifact
         run: mv zig-out/bin/unflare ${{ matrix.artifact }}
 
