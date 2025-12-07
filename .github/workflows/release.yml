@@ -10,26 +10,17 @@ permissions:
 
 jobs:
   build:
-    name: Build ${{ matrix.target }}
+    name: Build ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
-          - target: x86_64-linux
-            os: ubuntu-latest
+          - os: ubuntu-latest
             artifact: unflare-linux-x86_64
-          - target: aarch64-linux
-            os: ubuntu-latest
-            artifact: unflare-linux-aarch64
-          - target: x86_64-macos
-            os: macos-latest
+          - os: macos-13
             artifact: unflare-macos-x86_64
-          - target: aarch64-macos
-            os: macos-latest
+          - os: macos-latest
             artifact: unflare-macos-aarch64
-          - target: x86_64-windows
-            os: ubuntu-latest
-            artifact: unflare-windows-x86_64.exe
 
     steps:
       - uses: actions/checkout@v4
@@ -39,16 +30,15 @@ jobs:
         with:
           version: 0.14.0
 
+      - name: Install OpenSSL (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev
+
       - name: Build
-        run: zig build -Doptimize=ReleaseSafe -Dtarget=${{ matrix.target }}
+        run: zig build -Doptimize=ReleaseSafe
 
-      - name: Rename artifact (Unix)
-        if: matrix.os != 'windows-latest' && !contains(matrix.target, 'windows')
+      - name: Rename artifact
         run: mv zig-out/bin/unflare ${{ matrix.artifact }}
-
-      - name: Rename artifact (Windows target)
-        if: contains(matrix.target, 'windows')
-        run: mv zig-out/bin/unflare.exe ${{ matrix.artifact }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
