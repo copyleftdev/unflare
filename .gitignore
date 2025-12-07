@@ -29,6 +29,7 @@ rfcs/
 docs/
 *.md
 !README.md
+!CONTRIBUTING.md
 
 # Test artifacts
 test/fixtures/*.generated
