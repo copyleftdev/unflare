@@ -36,7 +36,7 @@ sudo mv unflare-macos-aarch64 /usr/local/bin/unflare
 
 ### From Source
 
-Requires Zig 0.13+.
+Requires Zig 0.14+.
 
 ```bash
 git clone https://github.com/copyleftdev/unflare.git
