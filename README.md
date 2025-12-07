@@ -1,51 +1,73 @@
 # unflare
 
-A high-performance Cloudflare intelligence toolkit written in Zig.
+[![CI](https://github.com/copyleftdev/unflare/actions/workflows/ci.yml/badge.svg)](https://github.com/copyleftdev/unflare/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A high-performance Cloudflare intelligence toolkit written in Zig. Zero external dependencies, single static binary.
 
 ## Features
 
-- **detect** — Multi-signal Cloudflare detection with confidence scoring
-- **probe** — Detailed HTTP response analysis with header highlighting
-- **trace** — Parse /cdn-cgi/trace endpoint data
-- **origin** — Discover origin IPs via subdomain enumeration
-- **favicon** — Generate MMH3 hashes for Shodan/Censys hunting
-- **ipcheck** — Check IPs against CDN/WAF ranges (Cloudflare, Fastly, Akamai)
+| Command | Description |
+|---------|-------------|
+| `detect` | Multi-signal Cloudflare detection with confidence scoring |
+| `probe` | Detailed HTTP response analysis with header highlighting |
+| `trace` | Parse /cdn-cgi/trace endpoint data |
+| `origin` | Discover origin IPs via subdomain enumeration |
+| `favicon` | Generate MMH3 hashes for Shodan/Censys hunting |
+| `ipcheck` | Check IPs against CDN/WAF ranges |
 
 ## Installation
 
-### From Source
+### Pre-built Binaries
 
-Requires Zig 0.13+ and OpenSSL development headers.
+Download from [Releases](https://github.com/copyleftdev/unflare/releases):
 
 ```bash
-# Build
-zig build -Doptimize=ReleaseSafe
+# Linux
+curl -LO https://github.com/copyleftdev/unflare/releases/latest/download/unflare-linux-x86_64
+chmod +x unflare-linux-x86_64
+sudo mv unflare-linux-x86_64 /usr/local/bin/unflare
 
-# Run
+# macOS
+curl -LO https://github.com/copyleftdev/unflare/releases/latest/download/unflare-macos-aarch64
+chmod +x unflare-macos-aarch64
+sudo mv unflare-macos-aarch64 /usr/local/bin/unflare
+```
+
+### From Source
+
+Requires Zig 0.13+.
+
+```bash
+git clone https://github.com/copyleftdev/unflare.git
+cd unflare
+zig build -Doptimize=ReleaseSafe
 ./zig-out/bin/unflare --help
 ```
 
-### Cross-Compilation
+## Quick Start
 
 ```bash
-# Linux x86_64
-zig build -Doptimize=ReleaseSafe -Dtarget=x86_64-linux
+# Detect Cloudflare
+unflare detect cloudflare.com
 
-# macOS ARM64
-zig build -Doptimize=ReleaseSafe -Dtarget=aarch64-macos
+# Find origin IPs behind Cloudflare
+unflare origin example.com
 
-# Windows
-zig build -Doptimize=ReleaseSafe -Dtarget=x86_64-windows
+# Get favicon hash for Shodan hunting
+unflare favicon github.com
+
+# Check if IPs are CDN/WAF protected
+unflare ipcheck 104.16.1.1 8.8.8.8
 ```
 
-## Usage
+## Examples
 
-### Detect Cloudflare
+### Cloudflare Detection
 
-```bash
-$ unflare detect cloudflare.com discord.com google.com
+```
+$ unflare detect cloudflare.com
 
-Scanning: cloudflare.com
 ╭─────────────────────── Cloudflare Detection ────────────────────────╮
 │   Target        cloudflare.com                                      │
 │   Status        ✓ CLOUDFLARE DETECTED                               │
@@ -57,35 +79,29 @@ Scanning: cloudflare.com
 
 ### Origin Discovery
 
-```bash
+```
 $ unflare origin example.com
-
-Origin Discovery: example.com
-Scanning subdomains...
 
 ┌─────────────────────────────────────────────────────────────────┐
 │ Target Analysis                                                 │
 ├─────────────────────────────────────────────────────────────────┤
 │ Target IP:      104.16.132.229                                  │
 │ Status:         ✓ Behind Cloudflare                             │
-│ Subdomains:     35                                              │
+│ Subdomains:     35 checked                                      │
 └─────────────────────────────────────────────────────────────────┘
 
 🎯 Potential Origin IPs (2 found):
-│ 192.168.1.100    │ mail.example.com              │   80%       │
-│ 10.0.0.50        │ dev.example.com               │   80%       │
+│ 192.168.1.100    │ mail.example.com     │   80%       │
 ```
 
-### Favicon Hash
+### Favicon Hash for Shodan
 
-```bash
+```
 $ unflare favicon github.com
 
 ┌─────────────────────────────────────────────────────────────────┐
 │ Favicon Analysis                                                │
 ├─────────────────────────────────────────────────────────────────┤
-│ URL:            https://github.com/favicon.ico                  │
-│ Size:           6518                                            │
 │ MMH3 Hash:      1848946384                                      │
 └─────────────────────────────────────────────────────────────────┘
 
@@ -93,46 +109,12 @@ Search Queries:
   Shodan:  http.favicon.hash:1848946384
 ```
 
-### IP Check
+## Contributing
 
-```bash
-$ unflare ipcheck 104.16.1.1 8.8.8.8 151.101.1.140
-
-                 IP Range Check
-┏━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━┳━━━━━━━━━━━┓
-┃ IP            ┃ Provider   ┃ Type ┃ Protected ┃
-┡━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━╇━━━━━━━━━━━┩
-│ 104.16.1.1    │ cloudflare │ waf  │ ✓         │
-│ 8.8.8.8       │ -          │ -    │ ✗         │
-│ 151.101.1.140 │ fastly     │ cdn  │ ✓         │
-└───────────────┴────────────┴──────┴───────────┘
-```
-
-## Detection Signals
-
-unflare analyzes multiple signals to detect Cloudflare:
-
-| Signal | Weight | Description |
-|--------|--------|-------------|
-| Server header | 30% | `server: cloudflare` |
-| CF-Ray header | 25% | Unique request ID with datacenter |
-| IP range | 20% | IP in Cloudflare's published ranges |
-| /cdn-cgi/trace | 15% | Cloudflare trace endpoint |
-| CF-Cache-Status | 10% | Cache status header |
-| Alt-Svc | 5% | HTTP/3 advertisement |
-| NEL | 5% | Network Error Logging |
-| CF-Mitigated | 10% | WAF/Bot management |
-
-## Subdomains Checked
-
-Origin discovery checks 35 common subdomains:
-
-- **Direct**: `direct`, `origin`, `backend`, `server`, `real`
-- **Mail**: `mail`, `smtp`, `pop`, `imap`, `mx`, `webmail`
-- **Dev**: `dev`, `staging`, `test`, `beta`, `uat`
-- **API**: `api`, `api2`, `api-internal`
-- **Admin**: `admin`, `panel`, `cpanel`, `whm`
-- **Other**: `ftp`, `ssh`, `vpn`, `old`, `www2`
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
+- Submitting issues and bug reports
+- Code style and architecture guidelines
+- Pull request process
 
 ## Legal
 
@@ -140,4 +122,4 @@ This tool is for **authorized security testing only**. Always obtain proper auth
 
 ## License
 
-MIT
+[MIT](LICENSE)
