@@ -1,0 +1,53 @@
+# Build artifacts
+zig-out/
+zig-cache/
+.zig-cache/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Windsurf / AI assistant files
+.windsurf/
+.windsurfrules
+windsurf-rules/
+*.windsurfrules
+
+# Cursor
+.cursor/
+.cursorules
+
+# Other AI assistants
+.aider*
+.continue/
+
+# Architecture / Design docs (if accidentally created here)
+rfcs/
+docs/
+*.md
+!README.md
+
+# Test artifacts
+test/fixtures/*.generated
+coverage/
+
+# Logs
+*.log
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+
+# Python artifacts (in case of contamination)
+__pycache__/
+*.py
+*.pyc
+.venv/
+venv/
