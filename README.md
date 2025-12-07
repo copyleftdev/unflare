@@ -1,7 +1,14 @@
-# unflare
+<p align="center">
+  <img src="media/unflare-logo.png" alt="unflare logo" width="400">
+</p>
 
-[![CI](https://github.com/copyleftdev/unflare/actions/workflows/ci.yml/badge.svg)](https://github.com/copyleftdev/unflare/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<h1 align="center">unflare</h1>
+
+<p align="center">
+  <a href="https://github.com/copyleftdev/unflare/actions/workflows/ci.yml"><img src="https://github.com/copyleftdev/unflare/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://ziglang.org/"><img src="https://img.shields.io/badge/Zig-0.14-f7a41d?logo=zig&logoColor=white" alt="Zig 0.14"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+</p>
 
 A high-performance Cloudflare intelligence toolkit written in Zig. Zero external dependencies, single static binary.
 
